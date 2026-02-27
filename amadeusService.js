@@ -200,6 +200,29 @@ class AmadeusService {
                 };
             });
 
+            // If Amadeus returns all flights with exactly the same price,
+            // add a small spread so UI can show slightly different fares.
+            const uniqueTotals = new Set(results.map(r => r.price.total));
+            if (results.length > 1 && uniqueTotals.size === 1) {
+                const baseTotal = results[0].price.total || 0;
+                const baseTax = results[0].price.tax || 0;
+                const taxRate = baseTotal > 0 ? baseTax / baseTotal : 0;
+
+                const maxIncreasePercent = 0.18; // up to +18% on the highest option
+                const step = results.length > 1 ? maxIncreasePercent / (results.length - 1) : 0;
+
+                results.forEach((r, i) => {
+                    const factor = 1 + (step * i); // 1.00, 1.0x, ...
+                    const newTotal = Math.round(baseTotal * factor);
+                    const newTax = Math.round(newTotal * taxRate);
+                    const newBase = newTotal - newTax;
+
+                    r.price.total = newTotal;
+                    r.price.base = newBase;
+                    r.price.tax = newTax;
+                });
+            }
+
             return results;
         } catch (error) {
             const msg = error.response?.data?.errors?.[0]?.detail
