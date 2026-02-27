@@ -64,19 +64,27 @@ app.get('/api/flights/suggestions', (req, res) => {
 /**
  * Flight Search API
  * POST /api/flights/search
+ * (Also supports GET with query params for no-code builders)
  */
-app.post('/api/flights/search', async (req, res) => {
+
+// Unified handler used by both POST body and GET query
+async function handleFlightSearch(req, res) {
     console.log('--- NEW SEARCH REQUEST ---');
-    console.log('Params:', JSON.stringify(req.body, null, 2));
+    const payload = req.method === 'GET' ? req.query : req.body;
+    console.log('Params:', JSON.stringify(payload, null, 2));
 
     try {
-        const results = await amadeusService.searchFlights(req.body);
+        const results = await amadeusService.searchFlights(payload);
         console.log('Search successful, returning', results.length, 'flights');
         res.json(results);
     } catch (error) {
         console.error('SEARCH ERROR:', error.message);
         res.status(500).json({ error: error.message });
     }
+}
+
+app.post('/api/flights/search', handleFlightSearch);
+app.get('/api/flights/search', handleFlightSearch);
 });
 
 // Health check for Amadeus authentication
