@@ -85,7 +85,7 @@ async function handleFlightSearch(req, res) {
 
 app.post('/api/flights/search', handleFlightSearch);
 app.get('/api/flights/search', handleFlightSearch);
-});
+
 
 // Health check for Amadeus authentication
 app.get('/api/health', async (req, res) => {
